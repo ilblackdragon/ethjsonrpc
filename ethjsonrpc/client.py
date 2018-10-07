@@ -97,7 +97,7 @@ class EthJsonRpc(object):
         if sig is not None and args is not None:
              types = sig[sig.find('(') + 1: sig.find(')')].split(',')
              encoded_params = encode_abi(types, args)
-             code += encoded_params.encode('hex')
+             code += encoded_params.hex()
         return self.eth_sendTransaction(from_address=from_, gas=gas, data=code)
 
     def get_contract_address(self, tx):
@@ -105,6 +105,8 @@ class EthJsonRpc(object):
         Get the address for a contract from the transaction that created it
         '''
         receipt = self.eth_getTransactionReceipt(tx)
+        if receipt is None:
+            return None
         return receipt['contractAddress']
 
     def call(self, address, sig, args, result_types):
@@ -113,9 +115,9 @@ class EthJsonRpc(object):
         transaction (useful for reading data)
         '''
         data = self._encode_function(sig, args)
-        data_hex = data.encode('hex')
+        data_hex = data.hex()
         response = self.eth_call(to_address=address, data=data_hex)
-        return decode_abi(result_types, response[2:].decode('hex'))
+        return decode_abi(result_types, response[2:].fromhex())
 
     def call_with_transaction(self, from_, address, sig, args, gas=None, gas_price=None, value=None):
         '''
@@ -125,7 +127,7 @@ class EthJsonRpc(object):
         gas = gas or self.DEFAULT_GAS_PER_TX
         gas_price = gas_price or self.DEFAULT_GAS_PRICE
         data = self._encode_function(sig, args)
-        data_hex = data.encode('hex')
+        data_hex = "0x" + data.hex()
         return self.eth_sendTransaction(from_address=from_, to_address=address, data=data_hex, gas=gas,
                                         gas_price=gas_price, value=value)
 
@@ -147,7 +149,7 @@ class EthJsonRpc(object):
 
         TESTED
         '''
-        data = str(data).encode('hex')
+        data = str(data).hex()
         return self._call('web3_sha3', [data])
 
     def net_version(self):
@@ -306,7 +308,7 @@ class EthJsonRpc(object):
 
         NEEDS TESTING
         '''
-        if isinstance(default_block, basestring):
+        if isinstance(default_block, str):
             if default_block not in BLOCK_TAGS:
                 raise ValueError
         return self._call('eth_getCode', [address, default_block])
@@ -357,7 +359,7 @@ class EthJsonRpc(object):
 
         NEEDS TESTING
         '''
-        if isinstance(default_block, basestring):
+        if isinstance(default_block, str):
             if default_block not in BLOCK_TAGS:
                 raise ValueError
         obj = {}
@@ -381,7 +383,7 @@ class EthJsonRpc(object):
 
         NEEDS TESTING
         '''
-        if isinstance(default_block, basestring):
+        if isinstance(default_block, str):
             if default_block not in BLOCK_TAGS:
                 raise ValueError
         obj = {}
